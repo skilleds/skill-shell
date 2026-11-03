@@ -3,7 +3,7 @@
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
-## [Não lançado]
+## [0.5.0] — 2026-11-03
 
 ### Alterado (quebra de contrato do gate)
 - `check-shell.sh` sai **`3`** (e não `2`) para "nada para verificar": em hook do Claude Code, exit 2 BLOQUEIA. `piso.md` §2, `SKILL.md`, `assets/CLAUDE.md` e `/shell-review` limitam 0/1/3 a verificadores/gates; `piso.md` ganha §8 "Hooks" (stdin JSON, exit 2 bloqueia, git hooks, teste).
