@@ -59,7 +59,8 @@ lugar onde o piso das outras vaza.
 ## Como usar
 
 1. **Rode o gate antes de discutir estilo:** `bash scripts/check-shell.sh .` — `0` passa · `1`
-   reprova · `2` **nada para verificar** (que não é aprovação).
+   reprova · `3` **nada para verificar** (que não é aprovação). (Não é `2`: exit 2 bloqueia em hook do
+   Claude Code.)
 2. **Leia o piso** (`references/piso.md`): strict mode e suas fugas, exit code, `trap`, `mktemp`,
    `eval`, idempotência.
 3. **Passe pelo quoting e pelo `shellcheck`** (`references/qualidade.md`), e decida **bash ou POSIX**
@@ -73,6 +74,7 @@ Mapa de references:
 |---|---|
 | O piso executável: strict mode **e o que ele não cobre**, exit code, sinais e `trap`, `mktemp`, `eval` vetado, idempotência | `references/piso.md` |
 | Aspas e word splitting, `shellcheck` como gate (e como silenciar de forma rastreável), bash vs POSIX/dash/busybox/macOS, estrutura do script | `references/qualidade.md` |
+| Hooks (Claude Code: stdin JSON, exit 2 bloqueia; git hooks), robustez de produção (`inherit_errexit`, `--`, `flock`, `set -x`, `PATH`/`umask` como root) e deploy só do git | `references/piso.md` §8–§10 |
 | O contrato do instalador: detectar em vez de exigir, falhar bem, `curl \| bash`, checklist | `references/instalador.md` |
 | Versões e ferramental (bash, dash, busybox, `shellcheck`, `shfmt`, `bats`) | `references/stack-versoes.md` |
 
@@ -88,8 +90,9 @@ Assets prontos para copiar: `assets/ci/github-actions-ci.yml` (shellcheck, shfmt
    `# shellcheck disable=SCxxxx` **com motivo, na linha**.
 3. **`eval` é VETADO.** Junto com `bash -c "$string"` montado com dado externo. Use **array** para
    montar comando e `case` para despachar.
-4. **Exit code é contrato:** `0` passa · `1` reprova · **`2` = não deu para verificar**. Devolver `0`
-   quando nada foi checado é a condição vacuamente verdadeira que este catálogo persegue.
+4. **Exit code é contrato:** em verificador/gate, `0` passa · `1` reprova · **`3` = não deu para
+   verificar** (nunca `2`: em hook do Claude Code exit 2 bloqueia). Hook segue o contrato do consumidor
+   (`piso.md` §8). Devolver `0` quando nada foi checado é a condição vacuamente verdadeira que este catálogo persegue.
 5. **`trap` limpa em `EXIT INT TERM`** sempre que o script cria temporário, monta, ou trava lock.
 6. **`mktemp`, nunca nome previsível em `/tmp`** — `/tmp` é mundialmente gravável e `$$` não
    protege: PID é previsível e reciclável.
@@ -102,6 +105,12 @@ Assets prontos para copiar: `assets/ci/github-actions-ci.yml` (shellcheck, shfmt
     ecoado em log.
 11. <!-- herdado:engineering/orquestracao:curto -->**Orquestrador não desenvolve; subagent barato executa.** O agent principal só planeja, despacha e revisa; ação onerosa vira micro-tasks para o executor mais barato que resolve: `haiku` (mecânico) / `sonnet` (código; falhou → mesmo subagent corrige, até 2 rodadas) → Codex `gpt-5.6-terra` → Cursor → subagent `opus` (motivo) → `park`; **visual vai direto ao Codex**; **imagem nunca pelo Claude: detectar Codex/Gemini e perguntar ao usuário qual usar (Codex é a sugestão), nunca API de imagem paga**; papéis em `agentes.toml`. No overdev, cada item do checklist vai a um subagent e o principal revisa antes do `- [x]`. **Sem frota ociosa:** idle com pendência volta ao trabalho; dependente de outro agent → mata e enfileira com gatilho; terminou → mata (§9.6). Detalhe: `schematize-engineering` → `references/orquestracao.md` §9.<!-- /herdado -->
 
+12. **Deploy só do git, via ops:** `scp`, `rsync` remoto, `| ssh`, `docker save|load` e `ssh host <comando
+    mutável>` reprovam no gate (waiver `# shell-ok: <motivo>`); `curl | bash`, `source` externo e
+    `sudo` embutido também.
+
+Herda os pisos 22–29 da `schematize-engineering` (git como trava de conclusão, deploy só do git, ops é o gate da IA, sem agents inúteis, relatório 30 min/handoff 6 h, CI remoto só antes do hml, microserviço autônomo, build em dev/hml + higiene).
+
 ## Relação com as outras skills
 
 - **`schematize-engineering`** — a base: o piso comum (segredo, testes, DoD, archive) vale igual
@@ -109,6 +118,7 @@ Assets prontos para copiar: `assets/ci/github-actions-ci.yml` (shellcheck, shfmt
 - **`schematize-infra`** — o que o script provisiona (systemd, container, isolamento). Esta skill
   cuida do **como o script é escrito**; a infra, do **que ele monta**.
 - **`schematize-qa`** — a disciplina de teste. Script com lógica de verdade (parsing, decisão) tem
-  teste, e `bats-core` é o runner.
+  teste: `bats-core` ou harness `*.test.sh` (fixtures com `mktemp`, caso vermelho antes do verde,
+  como a suíte desta skill).
 - **`schematize-pentest`** — injeção de comando é achado dela; aqui é o lado construtivo (`eval`
   vetado, array em vez de string).

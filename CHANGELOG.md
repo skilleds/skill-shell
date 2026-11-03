@@ -3,6 +3,27 @@
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Alterado (quebra de contrato do gate)
+- `check-shell.sh` sai **`3`** (e não `2`) para "nada para verificar": em hook do Claude Code, exit 2 BLOQUEIA. `piso.md` §2, `SKILL.md`, `assets/CLAUDE.md` e `/shell-review` limitam 0/1/3 a verificadores/gates; `piso.md` ganha §8 "Hooks" (stdin JSON, exit 2 bloqueia, git hooks, teste).
+- CI (`assets/ci/github-actions-ci.yml`): gatilho `workflow_dispatch` + tags `hml-*`/`v*` com `concurrency` e `paths-ignore` (piso 27; sem `pull_request`). Lista scripts por `git ls-files -z` incluindo os **sem extensão com shebang**; fim do `for t in $(...)` (word splitting) e do `bats ... || bats` que escondia erro.
+- Herda os pisos 22–29 da engineering (bloco curto em `SKILL.md` e `assets/CLAUDE.md`).
+
+### Adicionado
+- Gate: **deploy só do git, via ops** (pisos 23/24) — ERRO para `scp`, `rsync` para host remoto, `| ssh`, `docker save/load` e `ssh host <comando mutável>`; waiver `# shell-ok: <motivo>`.
+- Gate: `curl | bash`, `source` de caminho externo (posicional, ambiente, `curl`) e `sudo` embutido viram ERRO; script sem extensão com shebang entra na varredura; aviso para `exit 2` em script de hook.
+- `piso.md` §9 (robustez de produção): `inherit_errexit`, `set -E`/`trap ERR`, `${var:?}`, `--`, `printf` vs `echo`, `command -v`, `flock`, `set -x` vazando segredo, `PATH`/`umask` em script root; `IFS` desencorajado; correção de que `-e` não é herdado por `$(...)`.
+- 32 casos novos no teste (51 no total), cada um com vermelho antes do verde.
+
+### Corrigido
+- `rm -rf` sobre variável não validada agora **reprova** (antes só avisava, e um `${x:?}` qualquer calava o aviso); cobre `-fr`, `-r -f`, `-rf --`, `--recursive`; `${v:?}` só vale para a própria variável; variável de `mktemp` é aceita.
+- As checagens de strict mode, `mktemp`, `trap` e `pipefail` olham o código (sem comentário nem heredoc): `trap`/`pipefail` citados em comentário ou heredoc não dão mais falso verde. `$#` e `${#x}` não são mais tratados como comentário.
+- `README.md` e `/shell-review`: versão e contagem de casos.
+
+### On-hold
+- P2-14: `stack-versoes.md` mantém `shellcheck` sem versão fixada e a narrativa "shellcheck não instalado" (histórica) — reverificar com a doc oficial no próximo release.
+
 ## [0.4.0] — 2026-10-14
 Description reduzida para o orçamento de listagem do catálogo; o gate de shell passa a respeitar o `.gitignore`.
 

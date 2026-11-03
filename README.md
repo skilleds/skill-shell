@@ -33,12 +33,12 @@ bash /tmp/skill-shell/install.sh .        # instala em .claude/ do projeto atual
 
 ## O que tem dentro
 
-- **SKILL.md** — o contrato: 11 pisos inegociáveis + o mapa de references.
+- **SKILL.md** — o contrato: 12 pisos inegociáveis + o mapa de references.
 - **references/** — `piso` (strict mode e suas fugas, exit code, `trap`, `mktemp`, `eval`,
   idempotência), `qualidade` (aspas, `shellcheck`, bash vs POSIX, estrutura), `instalador` (o
   contrato do instalador), `stack-versoes` (anexo volátil com data de verificação).
 - **scripts/** — `check-shell.sh`, o gate (com **waiver rastreável** `# shell-ok: <motivo>` e
-  ignorando corpo de heredoc), e `check-shell.test.sh` (15 casos, 11 vermelhos).
+  ignorando corpo de heredoc), e `check-shell.test.sh` (51 casos, com vermelho para cada regra).
 - **assets/commands/** — `/shell-help`, `/shell-load`, `/shell-review`, `/shell-claude`,
   `/shell-cc`, `/shell-handoff`.
 - **assets/CLAUDE.md** — regra sempre-on de shell para a raiz do repo.
@@ -55,7 +55,7 @@ bash /tmp/skill-shell/install.sh .        # instala em .claude/ do projeto atual
 
 ## Versão
 
-**v0.1.0** — changelog em `CHANGELOG.md`.
+**v0.4.0** — changelog em `CHANGELOG.md`.
 
 ## Regra de ouro
 
