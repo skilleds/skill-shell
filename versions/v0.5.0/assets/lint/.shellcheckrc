@@ -1,0 +1,4 @@
+# .shellcheckrc (schematize-shell). Piso: warning. Desabilite check so com justificativa no proprio arquivo.
+severity=warning
+enable=require-variable-braces
+external-sources=true

@@ -1,0 +1,59 @@
+# CI de shell (schematize-shell). Copie para .github/workflows/ci.yml.
+# Config do shellcheck: assets/lint/.shellcheckrc (copie para a raiz do repo).
+#
+# Gatilho (piso 27 da engineering): o gate POR COMMIT é LOCAL (`scripts/check-shell.sh` + shellcheck
+# no pre-commit). O CI remoto roda só em disparo manual ou ao empurrar tag de hml/release — nunca em
+# pull_request nem em push de branch.
+name: ci
+on:
+  workflow_dispatch:
+  push:
+    tags: ["hml-*", "v*"]
+    paths-ignore: ["**/*.md", "docs/**"]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  shell:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Ferramentas
+        run: sudo apt-get update && sudo apt-get install -y shellcheck shfmt bats
+      - name: Lista de scripts (*.sh E sem extensão com shebang de bash/sh)
+        run: |
+          set -euo pipefail
+          : > "$RUNNER_TEMP/scripts.lst"
+          while IFS= read -r -d '' f; do
+            [ -f "$f" ] && [ ! -L "$f" ] || continue
+            case "$f" in
+              *.sh) ;;
+              *.*) continue ;;
+              *) case "$(head -c 64 -- "$f" | tr -d '\0' | head -n 1)" in
+                   '#!/usr/bin/env bash'*|'#!/bin/bash'*|'#!/usr/bin/env sh'*|'#!/bin/sh'*) ;;
+                   *) continue ;;
+                 esac ;;
+            esac
+            printf '%s\0' "$f" >> "$RUNNER_TEMP/scripts.lst"
+          done < <(git ls-files -z)
+      - name: Gate da casa (se o repo trouxer o script)
+        run: if [ -f scripts/check-shell.sh ]; then bash scripts/check-shell.sh .; fi
+      - name: shellcheck (piso = warning)
+        run: xargs -0 -r shellcheck --severity=warning < "$RUNNER_TEMP/scripts.lst"
+      - name: shfmt (diff)
+        run: xargs -0 -r shfmt -d -i 2 -ci -bn < "$RUNNER_TEMP/scripts.lst"
+      - name: Testes (bats)
+        run: |
+          set -euo pipefail
+          dirs=()
+          for d in test tests; do
+            if [ -d "$d" ]; then dirs+=("$d"); fi
+          done
+          if [ "${#dirs[@]}" -gt 0 ]; then bats -r "${dirs[@]}"; fi
+      - name: Testes .test.sh
+        run: git ls-files -z '*.test.sh' | xargs -0 -r -n1 bash

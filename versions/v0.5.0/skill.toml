@@ -1,0 +1,12 @@
+slug = "shell"
+name = "schematize-shell"
+tag = "Linguagem · Shell"
+status = "beta"
+order = 26
+current_version = "0.5.0"
+href = "/shell"
+
+[descriptions]
+pt = "O piso de shell da casa: strict mode e o que ele NÃO cobre, quoting, `shellcheck` como gate que trava, `eval` vetado, exit code como contrato, `trap`/`mktemp`, idempotência, portabilidade bash vs POSIX — e o instalador que se adapta e nunca culpa quem rodou."
+en = "The house's shell floor: strict mode and what it does NOT cover, quoting, shellcheck as a blocking gate, no eval, exit code as contract, trap/mktemp, idempotency, bash vs POSIX portability — and the installer that adapts and never blames the user."
+es = "El piso de shell de la casa: strict mode y lo que NO cubre, quoting, shellcheck como gate que bloquea, eval vetado, exit code como contrato, trap/mktemp, idempotencia, portabilidad bash vs POSIX — y el instalador que se adapta y nunca culpa a quien lo ejecutó."
