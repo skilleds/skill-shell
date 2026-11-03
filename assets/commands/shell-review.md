@@ -12,12 +12,14 @@ bash .claude/skills/schematize-shell/scripts/check-shell.sh .   # o piso da casa
 shellcheck --severity=warning --format=gcc <arquivos>           # a análise estática
 ```
 
-`0` passa · `1` reprova · `2` **nada para verificar** — que não é aprovação.
+`0` passa · `1` reprova · `3` **nada para verificar** — que não é aprovação (não é `2`: exit 2 bloqueia em hook).
 
 O gate cobra: strict mode (ou a **exceção declarada** — biblioteca sourceada, coletor, harness);
 `eval` e `bash -c "$var"`; `/tmp` com nome previsível; `mktemp` sem `trap`; `rm -rf $var` sem
-`${var:?}`; `cd` sem guarda; parse de `ls`; `exit 0` incondicional no fim; bashismo sob shebang `sh`;
-segredo em argumento. Waiver: `# shell-ok: <motivo>` na linha ou na de cima — **com o motivo**.
+`${var:?}` (erro, também `-fr`/`-r -f`/`--`); `cd` sem guarda; parse de `ls`; `exit 0` incondicional no fim; bashismo sob shebang `sh`;
+segredo em argumento; **deploy por cópia** (`scp`, `rsync` remoto, `| ssh`, `docker save|load`,
+`ssh host <mutável>` — pisos 23/24); `curl | bash`; `source` externo; `sudo` embutido. Hook:
+`exit 2` avisa (bloqueia no Claude Code, `piso.md` §8). Waiver: `# shell-ok: <motivo>` na linha ou na de cima — **com o motivo**.
 
 ## 2. Depois, o que a máquina não lê
 
@@ -36,5 +38,5 @@ segredo em argumento. Waiver: `# shell-ok: <motivo>` na linha ou na de cima — 
 
 ## 3. Feche
 
-Achado vira correção no mesmo PR ou item de checklist com dono — não "depois". E rode o vermelho do
-próprio gate quando mexer nele: `bash scripts/check-shell.test.sh` (15 casos).
+Achado vira correção no mesmo commit ou item de checklist com dono — não "depois". E rode o vermelho do
+próprio gate quando mexer nele: `bash scripts/check-shell.test.sh` (51 casos).
